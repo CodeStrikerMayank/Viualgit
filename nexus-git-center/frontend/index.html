@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Git Odyssey - 2D Flow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -17,24 +18,35 @@
             </div>
         </header>
 
-        <main class="stages-container">
-            <div class="stage" id="working-directory">
-                <h3>Working Directory</h3>
-                <div class="file-list"></div>
-            </div>
-            <div class="stage" id="staging-area">
-                <h3>Staging Area</h3>
-                <div class="file-list"></div>
-            </div>
-            <div class="stage" id="local-repo">
-                <h3>Local Repository</h3>
-                <div class="file-list"></div>
-            </div>
-            <div class="stage" id="remote-repo">
-                <h3>Remote Repository</h3>
-                <div class="file-list"></div>
-            </div>
-        </main>
+        <div class="content-wrapper">
+            <main class="stages-container">
+                <div class="stage" id="working-directory">
+                    <h3>Working Directory</h3>
+                    <div class="file-list"></div>
+                </div>
+                <div class="stage" id="staging-area">
+                    <h3>Staging Area</h3>
+                    <div class="file-list"></div>
+                </div>
+                <div class="stage" id="local-repo">
+                    <h3>Local Repository</h3>
+                    <div class="file-list"></div>
+                </div>
+                <div class="stage" id="remote-repo">
+                    <h3>Remote Repository</h3>
+                    <div class="file-list"></div>
+                </div>
+            </main>
+
+            <aside class="git-graph-panel">
+                <div class="graph-header">
+                    <h3>Git Graph</h3>
+                </div>
+                <div id="git-graph-viewport">
+                    <svg id="git-graph-svg"></svg>
+                </div>
+            </aside>
+        </div>
 
         <footer class="terminal-panel" onclick="document.getElementById('current-command').focus()">
             <div class="terminal-header">
@@ -52,16 +64,19 @@
 
     <script src="js/terminal.js"></script>
     <script src="js/dom_renderer.js"></script>
+    <script src="js/git_graph.js"></script>
     <script src="js/autopilot.js"></script>
     <script>
         // Entry point to initialize the app
         document.addEventListener('DOMContentLoaded', () => {
             const terminal = new Terminal('current-command', 'terminal-output');
             const renderer = new DOMRenderer();
+            const graph = new GitGraph('git-graph-svg');
             
             window.app = {
                 terminal: terminal,
                 renderer: renderer,
+                graph: graph,
                 autopilot: new Autopilot()
             };
 
@@ -73,16 +88,21 @@
                     terminal.log("Changes staged for commit.", "success");
                     await renderer.moveAll('working', 'staging');
                 } else if (command.startsWith('git commit')) {
-                    terminal.log("[main a1b2c3d] manual commit", "info");
+                    terminal.log("[main a1b2c3d] commit", "info");
                     await renderer.moveAll('staging', 'local');
+                    graph.addCommit();
                 } else if (command === 'git push') {
                     terminal.log("Pushing to remote...", "info");
                     await renderer.moveAll('local', 'remote');
                     terminal.log("Successfully pushed to main", "success");
+                } else if (command.startsWith('git checkout -b')) {
+                    const branchName = command.replace('git checkout -b', '').trim();
+                    terminal.log(`Switched to a new branch '${branchName}'`, "success");
+                    graph.addBranch(branchName);
                 } else if (command === 'ls') {
                     terminal.log(renderer.files.map(f => f.name).join('  '), "info");
                 } else if (command === 'clear') {
-                    // Logic already in terminal to clear history if needed
+                    // terminal.clear() logic here
                 } else if (command !== '') {
                     terminal.log(`command not found: ${command}`, "error");
                 }

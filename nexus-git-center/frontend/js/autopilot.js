@@ -9,42 +9,44 @@ class Autopilot {
         
         const term = window.app.terminal;
         const renderer = window.app.renderer;
+        const graph = window.app.graph;
 
-        // Ensure we have some files to work with
-        if (renderer.files.filter(f => f.stage === 'working').length === 0) {
-            term.log("No files detected in Working Directory. Creating some...", "info");
-            renderer.addFile();
-            await this.sleep(1000);
-            renderer.addFile();
-            await this.sleep(1000);
-        }
-
-        // 1. Git Add
+        // Sequence 1: Initial Commit on Main
+        term.log("Initializing project...", "info");
+        renderer.addFile();
+        await this.sleep(1000);
+        
         await term.type("git add .");
-        term.log("Changes staged for commit.", "success");
         await renderer.moveAll('working', 'staging');
-        await this.sleep(1000);
-
-        // 2. Git Commit
-        await term.type("git commit -m \"feat: initialize project structure\"");
-        term.log("[main (root-commit) a1b2c3d] feat: initialize project structure", "info");
-        term.log(`${renderer.files.length} files changed, ${renderer.files.length * 10} insertions(+)`, "info");
+        
+        await term.type("git commit -m \"initial commit\"");
         await renderer.moveAll('staging', 'local');
+        graph.addCommit();
         await this.sleep(1000);
 
-        // 3. Git Push
-        await term.type("git push origin main");
-        term.log("Enumerating objects: 5, done.", "info");
-        term.log("Counting objects: 100% (5/5), done.", "info");
-        term.log("Delta compression using up to 8 threads", "info");
-        term.log("Compressing objects: 100% (3/3), done.", "info");
-        term.log("Writing objects: 100% (5/5), 582 bytes | 582.00 KiB/s, done.", "info");
-        term.log("To https://github.com/user/nexus-git-center.git", "info");
-        term.log(" * [new branch]      main -> main", "success");
+        // Sequence 2: Branching out
+        await term.type("git checkout -b feature/ui-overhaul");
+        term.log("Switched to a new branch 'feature/ui-overhaul'", "success");
+        graph.addBranch("feature/ui-overhaul");
+        await this.sleep(1500);
+
+        // Sequence 3: Work on Feature Branch
+        renderer.addFile();
+        await this.sleep(800);
+        await term.type("git add .");
+        await renderer.moveAll('working', 'staging');
         
+        await term.type("git commit -m \"feat: add new visual layers\"");
+        await renderer.moveAll('staging', 'local');
+        graph.addCommit();
+        await this.sleep(1000);
+
+        // Sequence 4: Push Feature
+        await term.type("git push origin feature/ui-overhaul");
         await renderer.moveAll('local', 'remote');
+        term.log("Branch 'feature/ui-overhaul' set up to track remote", "success");
         
-        term.log("Autopilot sequence completed successfully.", "success");
+        term.log("Autopilot sequence completed. Look at that beautiful Git Tree!", "success");
         this.isRunning = false;
     }
 

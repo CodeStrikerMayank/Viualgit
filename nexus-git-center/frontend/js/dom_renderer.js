@@ -78,6 +78,11 @@ class DOMRenderer {
                 fileObj.element.style.transform = '';
                 fileObj.element.style.transition = '';
                 fileObj.stage = targetStageName;
+
+                // Trigger Impact Effect
+                const stageEl = targetContainer.parentElement;
+                stageEl.classList.add('impact');
+                setTimeout(() => stageEl.classList.remove('impact'), 500);
             }, 800);
         });
 
