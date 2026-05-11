@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Odyssey - 2D Flow</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <h1>Git Odyssey <span class="subtitle">// 2D Minimalist Flow</span></h1>
+            <div class="controls">
+                <button id="add-file-btn">New File</button>
+                <button id="autopilot-btn" class="primary">Start Autopilot</button>
+                <button id="reset-btn">Reset</button>
+            </div>
+        </header>
+
+        <main class="stages-container">
+            <div class="stage" id="working-directory">
+                <h3>Working Directory</h3>
+                <div class="file-list"></div>
+            </div>
+            <div class="stage" id="staging-area">
+                <h3>Staging Area</h3>
+                <div class="file-list"></div>
+            </div>
+            <div class="stage" id="local-repo">
+                <h3>Local Repository</h3>
+                <div class="file-list"></div>
+            </div>
+            <div class="stage" id="remote-repo">
+                <h3>Remote Repository</h3>
+                <div class="file-list"></div>
+            </div>
+        </main>
+
+        <footer class="terminal-panel" onclick="document.getElementById('current-command').focus()">
+            <div class="terminal-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="terminal-title">bash -- nexus-git-center</span>
+                <span style="margin-left: auto; font-size: 0.7rem; opacity: 0.5;">Click to type</span>
+            </div>
+            <div class="terminal-body" id="terminal-output">
+                <div class="line"><span class="prompt">$</span> <span id="current-command" contenteditable="true" spellcheck="false"></span><span class="cursor">_</span></div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/terminal.js"></script>
+    <script src="js/dom_renderer.js"></script>
+    <script src="js/autopilot.js"></script>
+    <script>
+        // Entry point to initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            const terminal = new Terminal('current-command', 'terminal-output');
+            const renderer = new DOMRenderer();
+            
+            window.app = {
+                terminal: terminal,
+                renderer: renderer,
+                autopilot: new Autopilot()
+            };
+
+            // Set up manual command processing
+            terminal.onCommand(async (cmd) => {
+                const command = cmd.trim().toLowerCase();
+                
+                if (command === 'git add' || command === 'git add .') {
+                    terminal.log("Changes staged for commit.", "success");
+                    await renderer.moveAll('working', 'staging');
+                } else if (command.startsWith('git commit')) {
+                    terminal.log("[main a1b2c3d] manual commit", "info");
+                    await renderer.moveAll('staging', 'local');
+                } else if (command === 'git push') {
+                    terminal.log("Pushing to remote...", "info");
+                    await renderer.moveAll('local', 'remote');
+                    terminal.log("Successfully pushed to main", "success");
+                } else if (command === 'ls') {
+                    terminal.log(renderer.files.map(f => f.name).join('  '), "info");
+                } else if (command === 'clear') {
+                    // Logic already in terminal to clear history if needed
+                } else if (command !== '') {
+                    terminal.log(`command not found: ${command}`, "error");
+                }
+            });
+            
+            document.getElementById('add-file-btn').addEventListener('click', () => {
+                window.app.renderer.addFile();
+            });
+            
+            document.getElementById('autopilot-btn').addEventListener('click', () => {
+                window.app.autopilot.start();
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                location.reload();
+            });
+        });
+    </script>
+</body>
+</html>
