@@ -1,13 +1,14 @@
 :root {
-    --bg-color: #0A192F;
-    --container-bg: #112240;
-    --text-primary: #CCD6F6;
-    --text-secondary: #8892B0;
-    --accent: #64FFDA;
-    --accent-glow: rgba(100, 255, 218, 0.1);
-    --border-radius: 4px;
+    --bg-color: #020c1b;
+    --container-bg: rgba(17, 34, 64, 0.7);
+    --text-primary: #ccd6f6;
+    --text-secondary: #8892b0;
+    --accent: #64ffda;
+    --accent-glow: rgba(100, 255, 218, 0.15);
+    --border-radius: 8px;
     --font-mono: 'SF Mono', 'Fira Code', 'Roboto Mono', monospace;
     --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --glass-border: rgba(100, 255, 218, 0.1);
 }
 
 * {
@@ -18,6 +19,10 @@
 
 body {
     background-color: var(--bg-color);
+    background-image: 
+        linear-gradient(rgba(100, 255, 218, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100, 255, 218, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
     color: var(--text-primary);
     font-family: var(--font-sans);
     height: 100vh;
@@ -25,6 +30,20 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+}
+
+/* Vignette Effect */
+body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, transparent 0%, var(--bg-color) 90%);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .main-container {
@@ -32,7 +51,9 @@ body {
     height: 90vh;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
+    position: relative;
+    z-index: 2;
 }
 
 header {
@@ -43,175 +64,238 @@ header {
 }
 
 h1 {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     color: var(--accent);
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
 }
 
 h1 .subtitle {
     color: var(--text-secondary);
     font-size: 0.9rem;
     font-weight: normal;
-    margin-left: 10px;
+    margin-left: 15px;
+    letter-spacing: 1px;
 }
 
 .controls {
     display: flex;
-    gap: 10px;
+    gap: 15px;
 }
 
 button {
-    background: transparent;
+    background: rgba(100, 255, 218, 0.05);
     border: 1px solid var(--accent);
     color: var(--accent);
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: var(--border-radius);
     cursor: pointer;
     font-family: var(--font-mono);
     font-size: 0.8rem;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 button:hover {
-    background: var(--accent-glow);
+    background: var(--accent);
+    color: var(--bg-color);
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.4);
+    transform: translateY(-2px);
 }
 
 button.primary {
     background: var(--accent);
     color: var(--bg-color);
-}
-
-button.primary:hover {
-    background: #4de0c0;
+    font-weight: bold;
 }
 
 .stages-container {
     flex: 1;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: 25px;
 }
 
 .stage {
     background: var(--container-bg);
+    backdrop-filter: blur(12px);
     border-radius: var(--border-radius);
-    padding: 20px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+}
+
+.stage:hover {
+    border-color: rgba(100, 255, 218, 0.3);
+}
+
+/* Radar Scan Animation */
+.stage::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, rgba(100, 255, 218, 0.05), transparent);
+    animation: scan 6s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scan {
+    0% { top: -20%; }
+    100% { top: 120%; }
 }
 
 .stage h3 {
     text-align: center;
-    margin-bottom: 20px;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+    margin-bottom: 25px;
+    font-size: 0.8rem;
+    color: var(--accent);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    opacity: 0.8;
 }
 
 .file-list {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     position: relative;
 }
 
 /* File Card styling */
 .file-card {
-    background: #1d2d50;
-    padding: 12px;
-    border-radius: 4px;
-    border-left: 3px solid var(--accent);
+    background: rgba(29, 45, 80, 0.6);
+    padding: 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(100, 255, 218, 0.1);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     font-size: 0.85rem;
     color: var(--text-primary);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 10;
+    backdrop-filter: blur(5px);
+}
+
+.file-card:hover {
+    border-color: var(--accent);
+    transform: translateX(5px);
+    background: rgba(29, 45, 80, 0.9);
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.1);
 }
 
 .file-card.moving {
     position: absolute;
-    width: calc(100% - 40px);
+    width: calc(100% - 50px);
     z-index: 100;
+    border-color: var(--accent);
+    box-shadow: 0 0 30px rgba(100, 255, 218, 0.3);
+    pointer-events: none;
 }
 
 .file-icon {
-    width: 20px;
-    height: 24px;
+    width: 18px;
+    height: 22px;
     background: var(--accent);
     clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%);
-    opacity: 0.8;
+    box-shadow: 0 0 10px var(--accent);
+    filter: drop-shadow(0 0 5px var(--accent));
 }
 
 /* Terminal styling */
 .terminal-panel {
-    height: 200px;
-    background: #011627;
-    border-radius: 6px;
+    height: 220px;
+    background: rgba(1, 22, 39, 0.8);
+    backdrop-filter: blur(15px);
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
 }
 
 .terminal-header {
-    background: #1d2d50;
-    padding: 10px;
+    background: rgba(29, 45, 80, 0.5);
+    padding: 12px 20px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    border-bottom: 1px solid var(--glass-border);
 }
 
 .dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
 }
 
-.dot.red { background: #ff5f56; }
-.dot.yellow { background: #ffbd2e; }
-.dot.green { background: #27c93f; }
+.dot.red { background: #ff5f56; box-shadow: 0 0 8px #ff5f56; }
+.dot.yellow { background: #ffbd2e; box-shadow: 0 0 8px #ffbd2e; }
+.dot.green { background: #27c93f; box-shadow: 0 0 8px #27c93f; }
 
 .terminal-title {
     margin-left: 10px;
     font-size: 0.75rem;
     color: var(--text-secondary);
     font-family: var(--font-mono);
+    letter-spacing: 1px;
 }
 
 .terminal-body {
     flex: 1;
-    padding: 15px;
+    padding: 20px;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     overflow-y: auto;
     color: #d6deeb;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
 }
 
 .line {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    line-height: 1.4;
 }
 
 .prompt {
     color: var(--accent);
-    margin-right: 10px;
+    margin-right: 12px;
+    font-weight: bold;
 }
 
 .cursor {
     display: inline-block;
     width: 8px;
+    height: 1.2em;
     background: var(--accent);
     animation: blink 1s infinite;
-    margin-left: 2px;
+    margin-left: 4px;
+    vertical-align: middle;
+    box-shadow: 0 0 10px var(--accent);
 }
 
 @keyframes blink {
     50% { opacity: 0; }
+}
+
+/* Custom Scrollbar for Terminal */
+.terminal-body::-webkit-scrollbar {
+    width: 4px;
+}
+.terminal-body::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
 }
