@@ -48,6 +48,7 @@ class GitEngine {
             head: this.branches[this.currentBranch].head,
             color: this.getRandomColor()
         };
+        this.currentBranch = name;
         return true;
     }
 
@@ -73,8 +74,14 @@ class GitEngine {
     stashPop() {
         if (this.stash.length === 0) return false;
         const snapshot = this.stash.pop();
-        snapshot.working.forEach(f => this.workingDirectory.add(f));
-        snapshot.staging.forEach(f => this.stagingArea.add(f));
+        snapshot.working.forEach(f => {
+            f.status = 'untracked';
+            this.workingDirectory.add(f);
+        });
+        snapshot.staging.forEach(f => {
+            f.status = 'staged';
+            this.stagingArea.add(f);
+        });
         return true;
     }
 
@@ -110,12 +117,23 @@ class GitEngine {
 
     reset() {
         if (this.history.length === 0) return false;
-        this.history.pop();
-        if (this.history.length > 0) {
-            this.branches[this.currentBranch].head = this.history[this.history.length - 1].hash;
-        } else {
-            this.branches[this.currentBranch].head = null;
-        }
+        
+        const branchHead = this.branches[this.currentBranch].head;
+        if (!branchHead) return false;
+
+        const commitIndex = this.history.findIndex(c => c.hash === branchHead);
+        if (commitIndex === -1) return false;
+
+        const currentCommit = this.history[commitIndex];
+        this.history.splice(commitIndex, 1);
+        
+        this.branches[this.currentBranch].head = currentCommit.parent;
+        
+        currentCommit.files.forEach(f => {
+            f.status = 'untracked';
+            this.workingDirectory.add(f);
+        });
+
         return true;
     }
 

@@ -43,53 +43,74 @@ class DOMRenderer {
     }
 
     async moveAll(fromStage, toStage) {
+        // Find files that are CURRENTLY in the fromStage
         const filesToMove = this.files.filter(f => f.stage === fromStage);
         if (filesToMove.length === 0) return;
 
-        const promises = filesToMove.map(file => this.moveFile(file.id, toStage));
-        await Promise.all(promises);
+        // Mark them as 'transitioning' immediately so they aren't picked up by other calls
+        filesToMove.forEach(f => f.stage = `moving_to_${toStage}`);
+
+        // Move with a slight stagger for a more organic, stable feel
+        for (let i = 0; i < filesToMove.length; i++) {
+            this.moveFile(filesToMove[i].id, toStage, i * 100);
+        }
+
+        // Wait for the longest animation to finish (roughly)
+        await new Promise(resolve => setTimeout(resolve, 850 + (filesToMove.length * 100)));
     }
 
-    async moveFile(fileId, targetStageName) {
+    async moveFile(fileId, targetStageName, delay = 0) {
         const fileObj = this.files.find(f => f.id === fileId);
         if (!fileObj) return;
 
         const targetContainer = this.stages[targetStageName];
+        if (!targetContainer) return;
+
+        // Ensure we wait for the stagger delay
+        if (delay > 0) await new Promise(r => setTimeout(r, delay));
+
         const startRect = fileObj.element.getBoundingClientRect();
         
+        // Change DOM parent
         fileObj.element.classList.add('moving');
         targetContainer.appendChild(fileObj.element);
+        
         const endRect = fileObj.element.getBoundingClientRect();
         
+        // Calculate delta for "inverse" animation (FLIP technique)
         const deltaX = startRect.left - endRect.left;
         const deltaY = startRect.top - endRect.top;
         
         // GSAP Implementation for Silk-Smooth Rendering
         gsap.fromTo(fileObj.element, 
-            { x: deltaX, y: deltaY, scale: 1.1, opacity: 0.8 },
+            { x: deltaX, y: deltaY, scale: 1.05, opacity: 0.8 },
             { 
-                duration: 0.8, 
+                duration: 0.7, 
                 x: 0, 
                 y: 0, 
                 scale: 1, 
                 opacity: 1,
-                ease: "expo.out",
+                ease: "back.out(1.2)",
+                onStart: () => {
+                    fileObj.stage = targetStageName; // Ensure stage is set to final
+                },
                 onComplete: () => {
                     fileObj.element.classList.remove('moving');
-                    fileObj.stage = targetStageName;
-                    
+                    gsap.set(fileObj.element, { clearProps: "all" });
+
+                    // Visual impact on the stage container
                     const stageEl = targetContainer.parentElement;
                     gsap.to(stageEl, {
                         duration: 0.1,
-                        x: 2,
-                        repeat: 3,
+                        y: 2,
+                        repeat: 1,
                         yoyo: true,
-                        onComplete: () => gsap.set(stageEl, { x: 0 })
+                        onComplete: () => gsap.set(stageEl, { clearProps: "transform" })
                     });
+
+                    if (window.app.wires) window.app.wires.drawPaths();
                 }
             }
         );
-
-        await new Promise(resolve => setTimeout(resolve, 850));
     }
 }

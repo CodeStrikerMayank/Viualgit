@@ -31,6 +31,7 @@ class ParticleSystem {
     }
 
     animate() {
+        if (!this.ctx) return;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.particles.forEach(p => {

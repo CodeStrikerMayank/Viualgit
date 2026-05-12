@@ -81,6 +81,7 @@ class AIController {
         const masterEngage = document.getElementById('master-engage-btn');
         if (masterEngage) {
             masterEngage.addEventListener('click', () => {
+                if (window.app && window.app.audio) window.app.audio.init();
                 if (this.isRunning) {
                     this.stopRequested = true;
                     masterEngage.classList.remove('running');
@@ -148,7 +149,12 @@ class AIController {
         document.body.classList.remove('modal-open');
         
         const { terminal: term, audio, particles, camera } = window.app;
-        term.log(`>> MISSION INITIATED: ${this.currentMission.toUpperCase()} <<`, "success");
+
+        // ── Mission Header ──
+        term.addSeparator();
+        term.log(`◆ NEURAL PIPELINE: ${this.currentMission.toUpperCase()} — ${sequence.length} STEPS`, "success");
+        term.addSeparator();
+        term.setProcessStatus('PIPELINE');
 
         const delay = (11 - this.config.speed) * 200;
         let i = 0;
@@ -161,7 +167,7 @@ class AIController {
 
             if (this.config.teachingMode) {
                 if (teachPrompt) teachPrompt.style.display = 'block';
-                term.log(`[TEACHING] Awaiting command release: ${cmd.toUpperCase()}`, "info");
+                term.log(`⏸ TEACHING — Awaiting release: ${cmd.toUpperCase()}`, "warn");
                 this.waitingForStep = true;
                 while (this.waitingForStep && !this.stopRequested) {
                     await new Promise(r => setTimeout(r, 100));
@@ -171,15 +177,28 @@ class AIController {
 
             if (this.stopRequested) break;
 
-            term.log(`[STEP ${i + 1}/${sequence.length}] Executing: ${cmd.toUpperCase()}`, "info");
+            term.log(`[${i + 1}/${sequence.length}] ▸ ${cmd.toUpperCase()}`, "info");
+            term.setProcessStatus(cmd.toUpperCase());
             await this.runDirective(cmd);
+
+            // Show pipeline progress
+            const progress = term.showProgress(`Pipeline`);
+            const pct = Math.round(((i + 1) / sequence.length) * 100);
+            await new Promise(r => setTimeout(r, 80));
+            progress.update(pct);
+            if (pct === 100) progress.complete();
+
             await new Promise(r => setTimeout(r, delay));
             i++;
         }
 
-        term.log(">> MISSION COMPLETED <<", "success");
+        term.addSeparator();
+        term.log("◆ MISSION COMPLETED — All synapses fired successfully", "success");
+        term.setProcessStatus('IDLE');
+        term.syncBranch();
+
         this.updateExplanation("Protocol Terminated", "All neural synapses successfully fired. System stabilized.");
-        particles.overload();
+        if (particles) particles.overload();
         audio.playSuccess();
         camera.reset();
         
@@ -215,17 +234,22 @@ class AIController {
         }
 
         // Type the command first
+        term.setProcessStatus(cmd.toUpperCase());
         await term.type(gitCmdString);
 
-        // Then output working logs
+        // Then output working logs with progress
         const logs = this.workingLogs[cmd] || ["Executing neural command...", "Processing neural pathways...", "Command complete."];
-        for (const log of logs) {
+        const prog = term.showProgress(cmd);
+        for (let li = 0; li < logs.length; li++) {
+            const log = logs[li];
             await term.typewriterLog(log, log.match(/success|complete|finalized|established|generated|updated|synchronized|stabilized|reapplied|reconstructed/) ? 'success' : 'info');
-            await new Promise(r => setTimeout(r, 100 + Math.random() * 200));
+            prog.update(Math.round(((li + 1) / logs.length) * 100));
+            await new Promise(r => setTimeout(r, 80 + Math.random() * 150));
         }
+        prog.complete();
 
         switch(cmd) {
-            case 'add':
+            case 'add': {
                 if (renderer.files.filter(f => f.stage === 'working').length === 0) {
                     renderer.addFile();
                 }
@@ -237,7 +261,8 @@ class AIController {
                     await renderer.moveAll('working', 'staging');
                 }
                 break;
-            case 'commit':
+            }
+            case 'commit': {
                 if (git.stagingArea.size === 0) {
                     term.typewriterLog(">> SMART ASSIST: Auto-staging files for commit <<", "info");
                     await this.runDirective('add');
@@ -252,6 +277,7 @@ class AIController {
                     term.typewriterLog("Nothing to commit", "info");
                 }
                 break;
+            }
             case 'push':
                 if (graph.commits.length === 0) {
                     term.typewriterLog(">> SMART ASSIST: Creating commit before push <<", "info");
@@ -259,7 +285,9 @@ class AIController {
                 }
                 wires.firePulse('local-repo', 'remote-repo');
                 audio.playMove();
+                // Move ALL files that are currently in 'local' stage to 'remote'
                 await renderer.moveAll('local', 'remote');
+                term.typewriterLog(`Successfully pushed to origin/${graph.currentBranch}`, "success");
                 break;
             case 'pull':
                 wires.firePulse('remote-repo', 'local-repo');
@@ -272,30 +300,37 @@ class AIController {
                 audio.playMove();
                 term.typewriterLog("Remote refs updated", "info");
                 break;
-            case 'branch':
+            case 'branch': {
                 const bName = "feat-" + Math.floor(Math.random()*1000);
                 git.createBranch(bName);
                 graph.addBranch(bName);
                 ui.updateBranch(bName);
+                term.syncBranch();
                 break;
-            case 'checkout':
+            }
+            case 'checkout': {
                 const branches = Object.keys(git.branches);
                 const target = branches[Math.floor(Math.random() * branches.length)];
                 git.checkout(target);
                 graph.currentBranch = target;
                 ui.updateBranch(target);
+                term.syncBranch();
                 break;
-            case 'merge':
-                if (graph.currentBranch !== 'main') {
-                    const source = graph.currentBranch;
-                    graph.currentBranch = 'main';
-                    ui.updateBranch('main');
-                    graph.addMerge(source, 'main');
-                    term.typewriterLog(`Merged ${source} into main`, "success");
+            }
+            case 'merge': {
+                const branches = Object.keys(git.branches).filter(b => b !== git.currentBranch);
+                if (branches.length > 0) {
+                    const source = branches[0]; // Simple choice for demo
+                    const mergeCommit = git.merge(source);
+                    if (mergeCommit) {
+                        graph.addMerge(source, git.currentBranch);
+                        term.typewriterLog(`Merged ${source} into ${git.currentBranch}`, "success");
+                    }
                 } else {
-                    term.typewriterLog("Already on main branch", "info");
+                    term.typewriterLog("No other branches to merge", "info");
                 }
                 break;
+            }
             case 'stash':
                 if (git.stashPush()) {
                     audio.playMove();
@@ -315,11 +350,19 @@ class AIController {
                 if (git.stashPop()) {
                     audio.playMove();
                     renderer.files.forEach(f => {
-                        if (f.stage === 'working' || f.stage === 'staging') {
+                        // Find matching file in git engine to sync status
+                        const gitFile = Array.from(git.workingDirectory).find(gf => gf.id === f.id) || 
+                                        Array.from(git.stagingArea).find(gf => gf.id === f.id);
+                        
+                        if (gitFile) {
+                            f.stage = gitFile.status === 'staged' ? 'staging' : 'working';
                             gsap.to(f.element, { opacity: 1, scale: 1, duration: 0.4 });
+                            // Re-append to correct stage container
+                            renderer.stages[f.stage].appendChild(f.element);
                         }
                     });
                     term.typewriterLog("Stash popped", "success");
+                    if (window.app.wires) window.app.wires.drawPaths();
                 } else {
                     term.typewriterLog("No stash entries found", "error");
                 }
@@ -334,6 +377,16 @@ class AIController {
                 if (git.reset()) {
                     term.typewriterLog("Reset to previous commit", "success");
                     audio.playType();
+                    // Visually restore files to working directory
+                    renderer.files.forEach(f => {
+                        const gitFile = Array.from(git.workingDirectory).find(gf => gf.id === f.id);
+                        if (gitFile) {
+                            f.stage = 'working';
+                            renderer.stages.working.appendChild(f.element);
+                            gsap.fromTo(f.element, { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4 });
+                        }
+                    });
+                    if (window.app.wires) window.app.wires.drawPaths();
                 } else {
                     term.typewriterLog("Nothing to reset", "error");
                 }
@@ -349,7 +402,7 @@ class AIController {
                     term.typewriterLog("Nothing to revert", "error");
                 }
                 break;
-            case 'cherry':
+            case 'cherry': {
                 const history = git.history;
                 if (history.length > 0) {
                     const hash = history[Math.floor(Math.random() * history.length)].hash;
@@ -364,6 +417,7 @@ class AIController {
                     term.typewriterLog("No commits to cherry-pick", "error");
                 }
                 break;
+            }
         }
     }
 }

@@ -36,6 +36,8 @@ class Camera {
     }
 
     async panToStage(stageId) {
+        if (window.app.parallax) window.app.parallax.lock();
+        
         const stage = document.getElementById(stageId);
         if (!stage) return;
         
@@ -51,5 +53,11 @@ class Camera {
     reset() {
         this.zoom(1);
         this.pan(0, 0);
+        if (window.app.parallax) window.app.parallax.unlock();
+        
+        // Improvement B: Update wires AFTER camera reset animation completes
+        setTimeout(() => {
+            if (window.app.wires) window.app.wires.drawPaths();
+        }, 850);
     }
 }

@@ -17,13 +17,6 @@ class Wires {
                     <stop offset="50%" style="stop-color:#f472b6; stop-opacity:0.6" />
                     <stop offset="100%" style="stop-color:#64ffda; stop-opacity:0.3" />
                 </linearGradient>
-                <filter id="pulse-glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
             </defs>
         `; 
         this.paths = {};

@@ -108,7 +108,7 @@ class Autopilot {
         // 6. Push All (THE CLIMAX)
         await term.type("git push origin main");
         camera.panToStage('remote-repo');
-        particles.overload();
+        if (particles) particles.overload();
         wires.firePulse('local-repo', 'remote-repo');
         audio.playMove();
         await renderer.moveAll('local', 'remote');

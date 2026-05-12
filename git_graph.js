@@ -5,9 +5,20 @@ class GitGraph {
         this.branches = {
             'main': { x: 40, color: '#64ffda', currentY: 40 }
         };
-        this.currentBranch = 'main';
+        this._currentBranch = 'main';
         this.nodeRadius = 6;
         this.verticalSpacing = 40;
+    }
+
+    get currentBranch() {
+        return (window.app && window.app.git) ? window.app.git.currentBranch : this._currentBranch;
+    }
+
+    set currentBranch(name) {
+        this._currentBranch = name;
+        if (window.app && window.app.git) {
+            window.app.git.currentBranch = name;
+        }
     }
 
     addCommit(customId = null) {
@@ -36,7 +47,17 @@ class GitGraph {
         this.commits.push(commit);
         branch.currentY += this.verticalSpacing;
         
+        this.updateSVGDimensions();
         this.scrollToBottom();
+    }
+
+    updateSVGDimensions() {
+        const maxY = Math.max(...Object.values(this.branches).map(b => b.currentY)) + 60;
+        const maxX = Math.max(...Object.values(this.branches).map(b => b.x)) + 60;
+        
+        this.svg.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
+        this.svg.setAttribute('height', maxY);
+        this.svg.style.width = '100%';
     }
 
     addBranch(name) {
@@ -47,7 +68,7 @@ class GitGraph {
         const startY = trunkCommit ? trunkCommit.y + this.verticalSpacing : 40;
 
         this.branches[name] = {
-            x: 40 + (branchCount * 40),
+            x: 40 + (branchCount * 50), // Increased horizontal spacing
             color: this.getRandomColor(),
             currentY: startY
         };
@@ -80,6 +101,9 @@ class GitGraph {
         this.drawNode(mergeCommit.x, mergeCommit.y, targetBranchObj.color);
         this.commits.push(mergeCommit);
         targetBranchObj.currentY += this.verticalSpacing;
+        
+        this.updateSVGDimensions();
+        this.scrollToBottom();
     }
 
     drawNode(x, y, color) {
@@ -97,6 +121,7 @@ class GitGraph {
         circle.style.transition = "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
         
         this.svg.appendChild(circle);
+
         requestAnimationFrame(() => {
             circle.style.opacity = "1";
             circle.style.transform = "scale(1)";

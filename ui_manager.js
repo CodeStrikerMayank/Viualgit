@@ -16,16 +16,42 @@ class UIManager {
     }
 
     initEventListeners() {
+        // Info Modal
+        const infoBtn = document.getElementById('info-modal-btn');
+        const infoModal = document.getElementById('info-modal');
+        const closeInfoBtn = document.getElementById('close-info-btn');
+
+        if (infoBtn && infoModal && closeInfoBtn) {
+            infoBtn.addEventListener('click', () => {
+                document.body.classList.add('modal-open');
+                infoModal.classList.add('active');
+            });
+            closeInfoBtn.addEventListener('click', () => {
+                document.body.classList.remove('modal-open');
+                infoModal.classList.remove('active');
+            });
+        }
+
         // Terminal toggling
         this.minimizeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            gsap.to(this.terminalPanel, { height: 45, duration: 0.4, ease: "power2.inOut" });
+            gsap.to(this.terminalPanel, { 
+                height: 45, 
+                duration: 0.4, 
+                ease: "power2.inOut",
+                onComplete: () => { if (window.app.wires) window.app.wires.drawPaths(); }
+            });
             this.terminalPanel.classList.add('minimized');
         });
 
         this.expandBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            gsap.to(this.terminalPanel, { height: 200, duration: 0.4, ease: "power2.inOut" });
+            gsap.to(this.terminalPanel, { 
+                height: 260, 
+                duration: 0.4, 
+                ease: "power2.inOut",
+                onComplete: () => { if (window.app.wires) window.app.wires.drawPaths(); }
+            });
             this.terminalPanel.classList.remove('minimized');
         });
 
