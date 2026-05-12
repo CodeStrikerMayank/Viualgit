@@ -254,6 +254,16 @@ header {
     border-color: rgba(100, 255, 218, 0.3);
 }
 
+.secondary-btn.muted-state {
+    color: #ff5f56;
+    border-color: rgba(255, 95, 86, 0.3);
+}
+
+.secondary-btn.muted-state:hover {
+    background: rgba(255, 95, 86, 0.1);
+    border-color: #ff5f56;
+}
+
 /* Info Modal Styles */
 .modal-content.info-content {
     max-width: 520px;
