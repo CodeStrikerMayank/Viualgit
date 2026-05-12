@@ -41,6 +41,11 @@ class Camera {
         const stage = document.getElementById(stageId);
         if (!stage) return;
         
+        // Auto-scroll for mobile visibility
+        if (window.innerWidth <= 1024) {
+            stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         // Slightly pan towards the stage to track it
         const rect = stage.getBoundingClientRect();
         const centerX = window.innerWidth / 2;

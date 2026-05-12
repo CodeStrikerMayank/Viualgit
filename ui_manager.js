@@ -46,8 +46,9 @@ class UIManager {
 
         this.expandBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            const targetHeight = window.innerWidth <= 768 ? 200 : 260;
             gsap.to(this.terminalPanel, { 
-                height: 260, 
+                height: targetHeight, 
                 duration: 0.4, 
                 ease: "power2.inOut",
                 onComplete: () => { if (window.app.wires) window.app.wires.drawPaths(); }

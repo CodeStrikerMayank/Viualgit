@@ -47,6 +47,17 @@ class DOMRenderer {
         const filesToMove = this.files.filter(f => f.stage === fromStage);
         if (filesToMove.length === 0) return;
 
+        // Focus the destination stage
+        if (window.app && window.app.camera) {
+            const stageIds = {
+                'working': 'working-directory',
+                'staging': 'staging-area',
+                'local': 'local-repo',
+                'remote': 'remote-repo'
+            };
+            window.app.camera.panToStage(stageIds[toStage]);
+        }
+
         // Mark them as 'transitioning' immediately so they aren't picked up by other calls
         filesToMove.forEach(f => f.stage = `moving_to_${toStage}`);
 
@@ -57,6 +68,11 @@ class DOMRenderer {
 
         // Wait for the longest animation to finish (roughly)
         await new Promise(resolve => setTimeout(resolve, 850 + (filesToMove.length * 100)));
+
+        // Reset camera after a short delay
+        if (window.app && window.app.camera) {
+            setTimeout(() => window.app.camera.reset(), 500);
+        }
     }
 
     async moveFile(fileId, targetStageName, delay = 0) {

@@ -50,13 +50,28 @@ class Wires {
         const r1 = fromEl.getBoundingClientRect();
         const r2 = toEl.getBoundingClientRect();
 
-        const x1 = (r1.left + r1.right) / 2 - containerRect.left + xOffset;
-        const y1 = r1.top - containerRect.top + 5;
-        const x2 = (r2.left + r2.right) / 2 - containerRect.left + xOffset;
-        const y2 = r2.top - containerRect.top + 5;
+        const isVerticalLayout = window.innerWidth <= 600;
+        let d;
 
-        const midY = y1 - (40 + idx * 5); 
-        const d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+        if (isVerticalLayout) {
+            // Mobile: Side-to-side orthogonal paths
+            const x1 = r1.left - containerRect.left + 10;
+            const y1 = (r1.top + r1.bottom) / 2 - containerRect.top + (idx * 5);
+            const x2 = r2.left - containerRect.left + 10;
+            const y2 = (r2.top + r2.bottom) / 2 - containerRect.top + (idx * 5);
+            
+            const midX = x1 - (30 + idx * 5);
+            d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+        } else {
+            // Desktop: Top-to-top orthogonal paths
+            const x1 = (r1.left + r1.right) / 2 - containerRect.left + xOffset;
+            const y1 = r1.top - containerRect.top + 5;
+            const x2 = (r2.left + r2.right) / 2 - containerRect.left + xOffset;
+            const y2 = r2.top - containerRect.top + 5;
+
+            const midY = y1 - (40 + idx * 5); 
+            d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+        }
         
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("d", d);
